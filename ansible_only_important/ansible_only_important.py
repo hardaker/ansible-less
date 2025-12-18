@@ -3,6 +3,7 @@
 from __future__ import annotations
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType, Namespace
 from logging import debug, info, warning, error, critical
+from collections import defaultdict
 import logging
 import sys
 import re
@@ -10,6 +11,7 @@ import re
 # optionally use rich
 try:
     #from rich import print
+    import rich
     from rich.logging import RichHandler
     from rich.theme import Theme
     from rich.console import Console
@@ -64,7 +66,25 @@ def parse_args() -> Namespace:
     return args
 
 
-def check_important(lines) -> bool:
+def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
+    """takes a collection of ansible log lines and groups them by hostname"""
+    groupings = {}
+    current_lines = []
+    for line in lines:
+        if results := re.match(r'(changed|ok|failed): \[([^]]+)\]', line):
+            print("FOUND: " + results.group(1) + " -- " + results.group(2))
+            groupings[str(results.group(2))] = {
+                'status': str(results.group(1)),
+                'lines': current_lines
+            }
+            current_lines = []
+        else:
+            current_lines.append(line)
+    #rich.print(groupings)
+    return groupings
+
+
+def check_important(lines: list[str]) -> bool:
     for line in lines:
         if "changed:" in line:
             return True
@@ -76,10 +96,29 @@ def check_important(lines) -> bool:
 
 def print_section(lines: list[str]) -> None:
     strip_prefixes: bool = True  # TODO(hardaker): make an option for this
+    display_by_groups: bool = True  # TODO(hardaker): make an option for this
+
     # print("------------------------")
     if strip_prefixes:
         lines = [re.sub(r'^[^|]*\s*\| ', "", line) for line in lines]
-    print("".join(lines))
+
+
+    if display_by_groups:
+        buffer = []
+        groupings = group_by_hosts(lines)
+        sorted_keys = sorted(groupings, key=lambda x: groupings[x]['lines'])
+        last_key = None
+        for key in sorted_keys:
+            status_line = groupings[key]['status'] + ": " + key + ":\n"
+            if last_key and groupings[last_key]['lines'] == groupings[key]['lines']:
+                buffer.insert(-1, status_line)
+                continue
+            buffer.append(status_line)
+            buffer.append("".join(groupings[key]['lines']))
+            last_key = key
+        print("".join(buffer))
+    else:
+        print("".join(lines))
 
 
 def maybe_print_nothing(lines: list[str]) -> None:

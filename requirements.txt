@@ -1,0 +1,4 @@
+rich
+rich-logging
+rich-console
+rich-argparse

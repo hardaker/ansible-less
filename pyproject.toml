@@ -3,11 +3,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "NAME"
+name = "ansible-only-important"
 dynamic = ["version"]
 description = "DESCR"
 readme = "README.md"
-license = ""
+#license = ""
 requires-python = ">=3.7"
 authors = [
     { name = "Wes Hardaker", email = "opensource@hardakers.net" },
@@ -19,7 +19,6 @@ classifiers = [
 dependencies = [
     "rich",
     "rich-logging",
-    "rich-console",
     "rich-argparse",
 ]
 
@@ -27,17 +26,17 @@ dependencies = [
 # "traffic_taffy.iana" = ['tables.msgpak']
 
 [project.scripts]
-script-name = "ansible_only_important.ansible_only_important:main"
+ansible-only-important = "ansible_only_important.ansible_only_important:main"
 
 [project.urls]
 Homepage = "https://github.com/hardaker/ansible-only-important"
 
 [tool.hatch.version]
-path = "PYTHONPATH/__init__.py"
+path = "ansible_only_important/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/PYTHONPATH",
+    "/ansible_only_important",
 ]
 
 [tool.ruff]

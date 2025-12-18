@@ -5,6 +5,7 @@ from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType, Na
 from logging import debug, info, warning, error, critical
 import logging
 import sys
+import re
 
 # optionally use rich
 try:
@@ -65,13 +66,7 @@ def parse_args() -> Namespace:
 
 def check_important(lines) -> bool:
     for line in lines:
-        if line.startswith('TASK'):
-            continue
-        elif "ok:" in line:
-            continue
-        elif "skipping:" in line:
-            continue
-        elif "changed:" in line:
+        if "changed:" in line:
             return True
         elif "FAILED" in line or "fatal" in line:
             return True
@@ -80,7 +75,10 @@ def check_important(lines) -> bool:
 
 
 def print_section(lines: list[str]) -> None:
+    strip_prefixes: bool = True  # TODO(hardaker): make an option for this
     print("------------------------")
+    if strip_prefixes:
+        lines = [re.sub(r'^[^|]*\s*\| ', "", line) for line in lines]
     print("".join(lines))
 
 

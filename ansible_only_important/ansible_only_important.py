@@ -104,12 +104,15 @@ def print_section(lines: list[str]) -> None:
 
 
     if display_by_groups:
+        task_line = lines.pop(0)
+        print("====" + task_line)
+
         buffer = []
         groupings = group_by_hosts(lines)
         sorted_keys = sorted(groupings, key=lambda x: groupings[x]['lines'])
         last_key = None
         for key in sorted_keys:
-            status_line = groupings[key]['status'] + ": " + key + ":\n"
+            status_line = "== " + groupings[key]['status'] + ": " + key + ":\n"
             if last_key and groupings[last_key]['lines'] == groupings[key]['lines']:
                 buffer.insert(-1, status_line)
                 continue

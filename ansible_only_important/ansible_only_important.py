@@ -9,7 +9,7 @@ import re
 
 # optionally use rich
 try:
-    from rich import print
+    #from rich import print
     from rich.logging import RichHandler
     from rich.theme import Theme
     from rich.console import Console
@@ -76,7 +76,7 @@ def check_important(lines) -> bool:
 
 def print_section(lines: list[str]) -> None:
     strip_prefixes: bool = True  # TODO(hardaker): make an option for this
-    print("------------------------")
+    # print("------------------------")
     if strip_prefixes:
         lines = [re.sub(r'^[^|]*\s*\| ', "", line) for line in lines]
     print("".join(lines))

@@ -17,10 +17,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
 ]
 dependencies = [
-    rich,
-    rich-logging,
-    rich-console,
-    rich-argparse,
+    "rich",
+    "rich-logging",
+    "rich-console",
+    "rich-argparse",
 ]
 
 # [project.package_data]

@@ -72,7 +72,7 @@ def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
     current_lines = []
     for line in lines:
         if results := re.match(r'(changed|ok|failed): \[([^]]+)\]', line):
-            print("FOUND: " + results.group(1) + " -- " + results.group(2))
+            #print("FOUND: " + results.group(1) + " -- " + results.group(2))
             groupings[str(results.group(2))] = {
                 'status': str(results.group(1)),
                 'lines': current_lines

@@ -29,15 +29,14 @@ def parse_args() -> Namespace:
                             description=__doc__,
                             epilog="Example Usage: ")
 
+    parser.add_argument("-H", "--show-headers", action="store_true",
+                        help="Shows the top headers from the file too.")
+
     parser.add_argument("--log-level", "--ll", default="info",
                         help="Define the logging verbosity level (debug, info, warning, error, fotal, critical).")
 
     parser.add_argument("input_file", type=FileType('r'),
                         nargs='?', default=sys.stdin,
-                        help="")
-
-    parser.add_argument("output_file", type=FileType('w'),
-                        nargs='?', default=sys.stdout,
                         help="")
 
     args = parser.parse_args()
@@ -80,14 +79,18 @@ def check_important(lines) -> bool:
     return False
 
 
-def maybe_print_nothing(lines) -> None:
+def print_section(lines: list[str]) -> None:
+    print("------------------------")
+    print("".join(lines))
+
+
+def maybe_print_nothing(lines: list[str]) -> None:
     return
 
 
-def maybe_print_task(lines) -> None:
+def maybe_print_task(lines: list[str]) -> None:
     if check_important(lines):
-        print("---------------------------------")
-        print("".join(lines))
+        print_section(lines)
 
 
 def main():
@@ -97,6 +100,9 @@ def main():
         "NONE": maybe_print_nothing,
         "TASK": maybe_print_task,
     }
+
+    if args.show_headers:
+        printers["NONE"] = print_section
 
     last_section: str = "NONE"
     current_lines: list[str] = []

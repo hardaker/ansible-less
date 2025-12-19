@@ -126,7 +126,7 @@ def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
         if results := re.match(r"(changed|ok|failed|fatal): \[([^]]+)\]:*(.*)", line):
             # print("FOUND: " + results.group(1) + " -- " + results.group(2))
             if results.group(3) != "":
-                current_lines.append(results.group(3) + "\n")
+                current_lines.insert(0, results.group(3) + "\n")
             groupings[str(results.group(2))] = {
                 "status": str(results.group(1)),
                 "lines": filter_lines(current_lines),
@@ -196,46 +196,52 @@ def print_section(
         print("".join(lines))
 
 
-def maybe_print_nothing(lines: list[str]) -> None:
+def print_nothing(lines: list[str]) -> None:
+    """A no-op print handler"""
     return
+
+
+def print_task(lines: list[str]) -> None:
+    """Prints a list of lines for a section"""
+    print_section(lines)
 
 
 def maybe_print_task(lines: list[str]) -> None:
     if check_important(lines):
-        print_section(lines)
+        print_task(lines)
+
+
+def print_trailer(lines: list[str]) -> None:
+    """Prints the final section"""
+    rich.print("".join(lines))
 
 
 def main():
     args = parse_args()
 
     printers: dict[str, callable] = {
-        "NONE": maybe_print_nothing,
+        "HEADER": print_nothing,
         "TASK": maybe_print_task,
         "HANDLER": maybe_print_task,
+        "PLAY RECAP": print_task,
     }
 
     if args.show_headers:
-        printers["NONE"] = print_section
+        printers["HEADER"] = print_section
 
-    last_section: str = "NONE"
+    last_section: str = "HEADER"
     current_lines: list[str] = []
 
     for line in args.input_file:
-        if line.startswith("TASK") or " TASK " in line:
-            # this starts a new section
-            printers[last_section](current_lines)
-            current_lines = []
-            last_section = "TASK"
-
-        if line.startswith("RUNNING HANDLER") or " RUNNING HANDLER " in line:
-            # this starts a new section
-            printers[last_section](current_lines)
-            current_lines = []
-            last_section = "HANDLER"
+        for section_words in ["TASK", "HANDLER", "PLAY RECAP"]:
+            if line.startswith(section_words) or f" {section_words} " in line:
+                printers[last_section](current_lines)
+                current_lines = []
+                last_section = section_words
 
         current_lines.append(line)
 
-    printers[last_section](current_lines)
+    print_trailer(current_lines)
 
 
 if __name__ == "__main__":

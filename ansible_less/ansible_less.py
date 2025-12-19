@@ -80,6 +80,37 @@ def parse_args() -> Namespace:
     return args
 
 
+def clean_blanks(lines: list[str]) -> list[str]:
+    """Drops trailing blank lines from a list of lines"""
+    while len(lines) > 0 and re.match(r'^\s*$', lines[-1]):
+        lines.pop()
+    return lines
+
+
+def filter_lines(lines: list[str]) -> list[str]:
+    """Clean and filter lines to simplify the output.
+
+    - Drop lines containing just date strings.
+    - Drop line portions containing diffs of tmpfile names
+    """
+
+    line_counter = 0
+    while line_counter < len(lines):
+        current_line = lines[line_counter]
+
+        # drop date only lines
+        if re.match(r'\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}', current_line):
+            lines.pop(line_counter)
+            # note: don't increment line counter here, as we want the same spot
+            continue
+
+        lines[line_counter] = re.sub(r'(.*after:.*/.ansible/tmp/)[^/]+.*/', '\\1.../', current_line)
+
+        line_counter += 1
+
+    return clean_blanks(lines)
+
+
 def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
     """takes a collection of ansible log lines and groups them by hostname"""
     groupings = {}
@@ -89,7 +120,7 @@ def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
             # print("FOUND: " + results.group(1) + " -- " + results.group(2))
             groupings[str(results.group(2))] = {
                 "status": str(results.group(1)),
-                "lines": current_lines,
+                "lines": filter_lines(current_lines),
             }
             current_lines = []
         else:

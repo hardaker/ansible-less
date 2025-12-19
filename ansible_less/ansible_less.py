@@ -141,7 +141,7 @@ def check_important(lines: list[str]) -> bool:
     for line in lines:
         if "changed:" in line:
             return True
-        elif "FAILED" in line or "fatal" in line:
+        elif "FAILED" in line or "fatal" in line or "failed" in line:
             return True
 
     return False

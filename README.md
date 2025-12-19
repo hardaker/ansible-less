@@ -16,5 +16,5 @@ uv tool install .
 
 ```
 unbuffer ansible-playbook ... >& my.log
-ansible-only-important my.log
+ansible-less my.log
 ```

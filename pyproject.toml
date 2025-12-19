@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ansible-only-important"
+name = "ansible-less"
 dynamic = ["version"]
 description = "DESCR"
 readme = "README.md"
@@ -26,17 +26,17 @@ dependencies = [
 # "traffic_taffy.iana" = ['tables.msgpak']
 
 [project.scripts]
-ansible-only-important = "ansible_only_important.ansible_only_important:main"
+ansible-less = "ansible_less.ansible_less:main"
 
 [project.urls]
-Homepage = "https://github.com/hardaker/ansible-only-important"
+Homepage = "https://github.com/hardaker/ansible-less"
 
 [tool.hatch.version]
-path = "ansible_only_important/__init__.py"
+path = "ansible_less/__init__.py"
 
 [tool.hatch.build.targets.sdist]
 include = [
-    "/ansible_only_important",
+    "/ansible_less",
 ]
 
 [tool.ruff]

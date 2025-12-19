@@ -118,7 +118,8 @@ def print_section(lines: list[str]) -> None:
 
     if display_by_groups:
         task_line = lines.pop(0)
-        print("====" + task_line)
+        task_line = re.sub(r'\**$', '', task_line)
+        print("==== " + task_line)
 
         buffer = []
         groupings = group_by_hosts(lines)

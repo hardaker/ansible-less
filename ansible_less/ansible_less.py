@@ -123,8 +123,10 @@ def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
     groupings = {}
     current_lines = []
     for line in lines:
-        if results := re.match(r"(changed|ok|failed): \[([^]]+)\]", line):
+        if results := re.match(r"(changed|ok|failed|fatal): \[([^]]+)\]:*(.*)", line):
             # print("FOUND: " + results.group(1) + " -- " + results.group(2))
+            if results.group(3) != "":
+                current_lines.append(results.group(3) + "\n")
             groupings[str(results.group(2))] = {
                 "status": str(results.group(1)),
                 "lines": filter_lines(current_lines),

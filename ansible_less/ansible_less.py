@@ -99,6 +99,7 @@ def group_by_hosts(lines: list[str]) -> dict[str, list[str]]:
 
 
 def check_important(lines: list[str]) -> bool:
+    """Decide which lines may indicate we need to display this section."""
     for line in lines:
         if "changed:" in line:
             return True
@@ -108,9 +109,12 @@ def check_important(lines: list[str]) -> bool:
     return False
 
 
-def print_section(lines: list[str]) -> None:
-    strip_prefixes: bool = True  # TODO(hardaker): make an option for this
-    display_by_groups: bool = True  # TODO(hardaker): make an option for this
+def print_section(
+    lines: list[str], strip_prefixes: bool = True, display_by_groups: bool = True
+) -> None:
+    """Prints a section of information after grouping it by hosts and cleaning."""
+    # TODO(hardaker): make an CLI option for strip_prefixes
+    # TODO(hardaker): make an CLI option for display_by_groups
 
     # print("------------------------")
     if strip_prefixes:
@@ -118,7 +122,7 @@ def print_section(lines: list[str]) -> None:
 
     if display_by_groups:
         task_line = lines.pop(0)
-        task_line = re.sub(r'\**$', '', task_line)
+        task_line = re.sub(r"\**$", "", task_line)
         print("==== " + task_line)
 
         buffer = []

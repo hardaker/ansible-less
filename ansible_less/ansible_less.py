@@ -152,6 +152,7 @@ def print_section(
     strip_prefixes: bool = True,
     display_by_groups: bool = True,
     group_oks: bool = True,
+    status_prefix: str = ">"
 ) -> None:
     """Prints a section of information after grouping it by hosts and cleaning."""
     # TODO(hardaker): make an CLI option for strip_prefixes
@@ -176,12 +177,12 @@ def print_section(
             # group 'ok' statuses into a single report line with a count
             ok_count = len([x for x in sorted_keys if groupings[x]["status"] == "ok"])
             if ok_count > 0:
-                buffer.append(f"== ok: {ok_count} hosts\n")
+                buffer.append(f"{status_prefix} ok: {ok_count} hosts\n")
 
         for key in sorted_keys:
             if group_oks and groupings[key]["status"] == "ok":
                 continue
-            status_line = "== " + groupings[key]["status"] + ": " + key + ":\n"
+            status_line = f"{status_prefix} {groupings[key]['status']}: {key}:\n"
             if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:
                 buffer.insert(-1, status_line)
                 continue

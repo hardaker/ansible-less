@@ -82,7 +82,7 @@ def parse_args() -> Namespace:
 
 def clean_blanks(lines: list[str]) -> list[str]:
     """Drops trailing blank lines from a list of lines"""
-    while len(lines) > 0 and re.match(r'^\s*$', lines[-1]):
+    while len(lines) > 0 and re.match(r"^\s*$", lines[-1]):
         lines.pop()
     return lines
 
@@ -99,12 +99,19 @@ def filter_lines(lines: list[str]) -> list[str]:
         current_line = lines[line_counter]
 
         # drop date only lines
-        if re.match(r'\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}', current_line):
+        if re.match(r"\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}", current_line):
             lines.pop(line_counter)
             # note: don't increment line counter here, as we want the same spot
             continue
 
-        lines[line_counter] = re.sub(r'(.*after:.*/.ansible/tmp/)[^/]+.*/', '\\1.../', current_line)
+        if re.match(r"^skipping: .*", current_line):
+            lines.pop(line_counter)
+            # note: don't increment line counter here, as we want the same spot
+            continue
+
+        lines[line_counter] = re.sub(
+            r"(.*after:.*/.ansible/tmp/)[^/]+.*/", "\\1.../", current_line
+        )
 
         line_counter += 1
 
@@ -141,11 +148,15 @@ def check_important(lines: list[str]) -> bool:
 
 
 def print_section(
-    lines: list[str], strip_prefixes: bool = True, display_by_groups: bool = True
+    lines: list[str],
+    strip_prefixes: bool = True,
+    display_by_groups: bool = True,
+    group_oks: bool = True,
 ) -> None:
     """Prints a section of information after grouping it by hosts and cleaning."""
     # TODO(hardaker): make an CLI option for strip_prefixes
     # TODO(hardaker): make an CLI option for display_by_groups
+    # TODO(hardaker): make an CLI option for group_oks
 
     # print("------------------------")
     if strip_prefixes:
@@ -160,7 +171,16 @@ def print_section(
         groupings = group_by_hosts(lines)
         sorted_keys = sorted(groupings, key=lambda x: groupings[x]["lines"])
         last_key = None
+
+        if group_oks:
+            # group 'ok' statuses into a single report line with a count
+            ok_count = len([x for x in sorted_keys if groupings[x]["status"] == "ok"])
+            if ok_count > 0:
+                buffer.append(f"== ok: {ok_count} hosts\n")
+
         for key in sorted_keys:
+            if group_oks and groupings[key]["status"] == "ok":
+                continue
             status_line = "== " + groupings[key]["status"] + ": " + key + ":\n"
             if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:
                 buffer.insert(-1, status_line)

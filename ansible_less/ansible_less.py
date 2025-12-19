@@ -208,6 +208,7 @@ def main():
     printers: dict[str, callable] = {
         "NONE": maybe_print_nothing,
         "TASK": maybe_print_task,
+        "HANDLER": maybe_print_task,
     }
 
     if args.show_headers:
@@ -222,6 +223,12 @@ def main():
             printers[last_section](current_lines)
             current_lines = []
             last_section = "TASK"
+
+        if line.startswith("RUNNING HANDLER") or " RUNNING HANDLER " in line:
+            # this starts a new section
+            printers[last_section](current_lines)
+            current_lines = []
+            last_section = "HANDLER"
 
         current_lines.append(line)
 

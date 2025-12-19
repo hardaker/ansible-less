@@ -99,7 +99,7 @@ def filter_lines(lines: list[str]) -> list[str]:
         current_line = lines[line_counter]
 
         # drop date only lines
-        if re.match(r"\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}", current_line):
+        if re.match(r"^\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}", current_line):
             lines.pop(line_counter)
             # note: don't increment line counter here, as we want the same spot
             continue
@@ -109,9 +109,26 @@ def filter_lines(lines: list[str]) -> list[str]:
             # note: don't increment line counter here, as we want the same spot
             continue
 
-        lines[line_counter] = re.sub(
+        # drop dates with fractional seconds for better aggregation
+        current_line = re.sub(
+            r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\.\d+", "\\1", current_line
+        )
+
+        # drop delta times
+        current_line = re.sub(
+            r'("delta": "\d+:\d{2}:\d{2})\.\d+', "\\1", current_line
+        )
+
+        # drop atime/mtime sub-second changes
+        current_line = re.sub(
+            r'("[am]time": \d+)\.\d+', "\\1", current_line
+        )
+
+        current_line = re.sub(
             r"(.*after:.*/.ansible/tmp/)[^/]+.*/", "\\1.../", current_line
         )
+
+        lines[line_counter] = current_line
 
         line_counter += 1
 
@@ -154,7 +171,7 @@ def print_section(
     strip_prefixes: bool = True,
     display_by_groups: bool = True,
     group_oks: bool = True,
-    status_prefix: str = ">"
+    status_prefix: str = ">",
 ) -> None:
     """Prints a section of information after grouping it by hosts and cleaning."""
     # TODO(hardaker): make an CLI option for strip_prefixes

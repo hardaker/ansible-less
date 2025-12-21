@@ -7,9 +7,12 @@ contains "changed:" or "failed" or..., when we better show it.
 
 # Installation
 
+Pick one to install from pypi:
+
 ```
-uv build .
-uv tool install .
+uv tool install ansible-less
+pipx install ansible-less
+pip install ansible-less
 ```
 
 # Usage

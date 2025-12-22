@@ -20,6 +20,8 @@ class AnsibleLess:
         strip_prefixes: bool = True,
         display_by_groups: bool = True,
         group_oks: bool = True,
+        group_skipped: bool = True,
+        display_all_sections: bool = False,
         status_prefix: str = ">",
     ):
         """Create an AnsibleLess instance."""
@@ -38,7 +40,9 @@ class AnsibleLess:
         self.strip_prefixes = strip_prefixes
         self.display_by_groups = display_by_groups
         self.group_oks = group_oks
+        self.group_skipped = group_skipped
         self.status_prefix = status_prefix
+        self.display_all_sections = display_all_sections
 
     @property
     def strip_prefixes(self) -> bool:
@@ -66,6 +70,15 @@ class AnsibleLess:
     @group_oks.setter
     def group_oks(self, newval: bool) -> None:
         self._group_oks = newval
+        
+    @property
+    def group_skipped(self) -> bool:
+        """Group skipping: lines from different hosts into just a count."""
+        return self._group_skipped
+
+    @group_skipped.setter
+    def group_skipped(self, newval: bool) -> None:
+        self._group_skipped = newval
         
     @property
     def status_prefix(self) -> str:
@@ -142,7 +155,7 @@ class AnsibleLess:
         group_lines = []
         for line in lines:
             if results := re.match(
-                r"(changed|ok|failed|fatal): \[([^]]+)\]:*(.*)", line
+                r"(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
             ):
                 # print("FOUND: " + results.group(1) + " -- " + results.group(2))
                 if results.group(3) != "":
@@ -159,10 +172,16 @@ class AnsibleLess:
 
     def check_important(self, lines: list[str]) -> bool:
         """Decide which lines may indicate we need to display this section."""
+
+        if self.display_all_sections:
+            return True
+
         for line in lines:
             if "changed:" in line:
                 return True
             if "FAILED" in line or "fatal" in line or "failed" in line:
+                return True
+            if "WARNING" in line:
                 return True
 
         return False
@@ -198,8 +217,18 @@ class AnsibleLess:
                 if ok_count > 0:
                     buffer.append(f"{self.status_prefix} ok: {ok_count} hosts\n")
 
+            if self.group_skipped:
+                # group 'ok' statuses into a single report line with a count
+                ok_count = len(
+                    [x for x in sorted_keys if groupings[x]["status"] == "skipping"]
+                )
+                if ok_count > 0:
+                    buffer.append(f"{self.status_prefix} skipped: {ok_count} hosts\n")
+
             for key in sorted_keys:
                 if self.group_oks and groupings[key]["status"] == "ok":
+                    continue
+                if self.group_skipped and groupings[key]["status"] == "skipping":
                     continue
                 status_line = f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"
                 if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:

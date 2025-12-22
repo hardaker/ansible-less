@@ -36,7 +36,7 @@ These are boring and you likely don't need to see when nothing changed.
 
 [note: also drops other boring lines, like blank and date-only lines]
 
-## Aggregating "ok" hosts to a simple count
+## Aggregating "ok" and "skipping" hosts to a simple count
 
 Hosts reporting 'ok' status for a /Task/ are aggregated into a single line:
 
@@ -44,9 +44,9 @@ Hosts reporting 'ok' status for a /Task/ are aggregated into a single line:
 TASK [base : base packages] ***************************************
 Wednesday 17 December 2025  15:52:02 +0000 (0:00:04.372)       0:11:12.388 ****
 ok: [host1.localdomain]
-ok: [host2.localdomain]
+skipping: [host2.localdomain]
 ok: [host5.localdomain]
-ok: [host6.localdomain]
+skipping: [host6.localdomain]
 changed: [host4.localdomain]
 changed: [host3.localdomain]
 ```
@@ -56,7 +56,8 @@ Is changed to:
 ``` text
 ==== TASK [base : base packages]
 
-> ok: 4 hosts
+> ok: 2 hosts
+> skipping: 2 hosts
 > changed: host4.localdomain:
 > changed: host3.localdomain:
 ```

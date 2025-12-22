@@ -171,7 +171,6 @@ class AnsibleLess:
 
     def check_important(self, lines: list[str]) -> bool:
         """Decide which lines may indicate we need to display this section."""
-
         if self.display_all_sections:
             return True
 

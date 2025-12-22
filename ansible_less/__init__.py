@@ -42,6 +42,8 @@ class AnsibleLess:
         self.status_prefix = status_prefix
         self.display_all_sections = display_all_sections
         
+        self.hosts = []
+
     @property
     def strip_prefixes(self) -> bool:
         """Remove the date/time/etc prefixes of each line."""
@@ -196,35 +198,68 @@ class AnsibleLess:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
 
         if self.display_by_groups:
+            # print the task itself
             task_line = lines.pop(0)
             task_line = re.sub(r"\**$", "", task_line)
             print("==== " + task_line)
 
             buffer = []
             groupings = self.group_by_hosts(lines)
+
+            # check if we have seen the list of hosts yet before
+            if len(self.hosts) == 0:
+                self.hosts = list(groupings.keys())
+
+            # print the contents
             sorted_keys = sorted(groupings, key=lambda x: groupings[x]["lines"])
             last_key = None
+            skip_headers = set()
 
             if self.group_oks:
                 # group 'ok' statuses into a single report line with a count
                 ok_count = len(
                     [x for x in sorted_keys if groupings[x]["status"] == "ok"]
                 )
-                if ok_count > 0:
-                    buffer.append(f"{self.status_prefix} ok: {ok_count} hosts\n")
+                if ok_count > 1:
+                    if len(self.hosts) > 0 and ok_count == len(self.hosts):
+                        buffer.append(f"{self.status_prefix} ok: all hosts\n")
+                    elif ok_count > 0:
+                        buffer.append(f"{self.status_prefix} ok: {ok_count} hosts\n")
+                    skip_headers.add('ok')
 
             if self.group_skipped:
-                # group 'ok' statuses into a single report line with a count
-                ok_count = len(
+                # group 'skipped' statuses into a single report line with a count
+                skipped_count = len(
                     [x for x in sorted_keys if groupings[x]["status"] == "skipping"]
                 )
-                if ok_count > 0:
-                    buffer.append(f"{self.status_prefix} skipped: {ok_count} hosts\n")
+                if skipped_count > 1:
+                    if len(self.hosts) > 0 and skipped_count == len(self.hosts):
+                        buffer.append(f"{self.status_prefix} skipped: all hosts\n")
+                    elif skipped_count > 0:
+                        buffer.append(f"{self.status_prefix} skipped: {skipped_count} hosts\n")
+                    skip_headers.add('skipping')
+
+            if True:  # bogus just for consistent indentation till refactor
+                # group 'changed' statuses into a single report line with a count
+                changed_count = len(
+                    [x for x in sorted_keys if groupings[x]["status"] == "changed"]
+                )
+                if changed_count > 1:
+                    if len(self.hosts) > 0 and changed_count == len(self.hosts):
+                        buffer.append(f"{self.status_prefix} changed: all hosts\n")
+                    skip_headers.add("changed")
+
+            if True:  # bogus just for consistent indentation till refactor
+                # group 'failed' statuses into a single report line with a count
+                failed_count = len(
+                    [x for x in sorted_keys if groupings[x]["status"] == "failed"]
+                )
+                if failed_count > 1:
+                    if len(self.hosts) > 0 and failed_count == len(self.hosts):
+                        buffer.append(f"{self.status_prefix} failed: all hosts\n")
 
             for key in sorted_keys:
-                if self.group_oks and groupings[key]["status"] == "ok":
-                    continue
-                if self.group_skipped and groupings[key]["status"] == "skipping":
+                if groupings[key]["status"] in skip_headers:
                     continue
                 status_line = (
                     f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"

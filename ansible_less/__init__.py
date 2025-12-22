@@ -70,7 +70,7 @@ class AnsibleLess:
     @group_oks.setter
     def group_oks(self, newval: bool) -> None:
         self._group_oks = newval
-        
+
     @property
     def group_skipped(self) -> bool:
         """Group skipping: lines from different hosts into just a count."""
@@ -79,7 +79,7 @@ class AnsibleLess:
     @group_skipped.setter
     def group_skipped(self, newval: bool) -> None:
         self._group_skipped = newval
-        
+
     @property
     def status_prefix(self) -> str:
         """Add this string to the beginning of all lines referencing hosts."""
@@ -88,7 +88,6 @@ class AnsibleLess:
     @status_prefix.setter
     def status_prefix(self, newval: str) -> None:
         self._status_prefix = newval
-
 
     @property
     def printers(self) -> dict[str, callable]:
@@ -230,7 +229,9 @@ class AnsibleLess:
                     continue
                 if self.group_skipped and groupings[key]["status"] == "skipping":
                     continue
-                status_line = f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"
+                status_line = (
+                    f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"
+                )
                 if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:
                     buffer.insert(-1, status_line)
                     continue

@@ -109,3 +109,6 @@ To the greatly simplified:
 ```
 
 
+# Testimonials
+
+> This amazing tool reduced a required post-ansible-playbook reading from 9987 lines to only 1475 lines.  How did I ever live without ansible-less?  -- The author

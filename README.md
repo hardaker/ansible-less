@@ -108,6 +108,46 @@ To the greatly simplified:
 ...
 ```
 
+## Stripping date/etc prefixes
+
+If the log lines contain prefixes with the date/time/etc, these are
+stripped from the lines for better readability.
+
+For example, this:
+
+``` text
+2025-12-17 15:41:09,848 p=1298946 u=hardaker n=ansible | TASK [take server offline]
+****************************************************************************************
+2025-12-17 15:41:09,848 p=1298946 u=hardaker n=ansible | Wednesday 17 December 2025
+15:41:09 +0000 (0:00:02.805)       0:00:19.795 ****
+2025-12-17 15:41:10,817 p=1298946 u=hardaker n=ansible | changed: [host1.localdomain] =>
+(item=server)
+2025-12-17 15:41:10,821 p=1298946 u=hardaker n=ansible | changed: [host2.localdomain] =>
+(item=server)
+2025-12-17 15:41:12,006 p=1298946 u=hardaker n=ansible | changed: [host6.localdomain] =>
+(item=server)
+2025-12-17 15:41:12,091 p=1298946 u=hardaker n=ansible | changed: [host5.localdomain] =>
+(item=server)
+2025-12-17 15:41:13,373 p=1298946 u=hardaker n=ansible | changed: [host3.localdomain] =>
+(item=server)
+2025-12-17 15:41:14,186 p=1298946 u=hardaker n=ansible | changed: [host4.localdomain] =>
+(item=server)
+2025-12-17 15:41:14,208 p=1298946 u=hardaker n=ansible | TASK [wait 3 seconds]
+```
+
+becomes:
+
+``` text
+==== TASK [take server offline]
+
+> changed: host1.localdomain:
+> changed: host2.localdomain:
+> changed: host6.localdomain:
+> changed: host5.localdomain:
+> changed: host3.localdomain:
+> changed: host4.localdomain:
+ => (item=server)
+```
 
 # Testimonials
 

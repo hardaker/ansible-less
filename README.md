@@ -70,6 +70,9 @@ you all hosts that are the same.  It modifies some lines to help
 consolidation, like temporary file names and atimes/mtimes second
 fractions.
 
+Note: when diffs/outputs are different in any way, they aren't
+aggregated.
+
 For example, this (actual diff dropped for brevity):
 
 ``` text

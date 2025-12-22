@@ -16,7 +16,7 @@ class AnsibleLess:
 
     def __init__(
         self,
-        show_headers: bool = False,
+        show_header: bool = False,
         strip_prefixes: bool = True,
         display_by_groups: bool = True,
         group_oks: bool = True,
@@ -26,7 +26,7 @@ class AnsibleLess:
     ):
         """Create an AnsibleLess instance."""
         self.printers = {
-            "HEADER": self.print_nothing,
+            "HEADER": self.print_header,
             "TASK": self.maybe_print_task,
             "HANDLER": self.maybe_print_task,
             "PLAY RECAP": self.print_task,
@@ -34,16 +34,14 @@ class AnsibleLess:
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
-        if show_headers:
-            self.printers["HEADER"] = self.print_section
-
+        self.show_header = show_header
         self.strip_prefixes = strip_prefixes
         self.display_by_groups = display_by_groups
         self.group_oks = group_oks
         self.group_skipped = group_skipped
         self.status_prefix = status_prefix
         self.display_all_sections = display_all_sections
-
+        
     @property
     def strip_prefixes(self) -> bool:
         """Remove the date/time/etc prefixes of each line."""
@@ -239,6 +237,11 @@ class AnsibleLess:
                 last_key = key
             print("".join(buffer))
         else:
+            print("".join(lines))
+
+    def print_header(self, lines: list[str]) -> None:
+        """Print the header lines and calculate full host list."""
+        if self.show_header:
             print("".join(lines))
 
     def print_nothing(self, _lines: list[str]) -> None:

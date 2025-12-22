@@ -38,9 +38,9 @@ def parse_args() -> Namespace:
 
     parser.add_argument(
         "-H",
-        "--show-headers",
+        "--show-header",
         action="store_true",
-        help="Shows the top headers from the file too.",
+        help="Shows the top header from the file too.",
     )
 
     parser.add_argument(
@@ -85,7 +85,7 @@ def parse_args() -> Namespace:
 def main():
     args = parse_args()
 
-    ansible_less = AnsibleLess(show_headers=args.show_headers)
+    ansible_less = AnsibleLess(show_header=args.show_header)
 
     ansible_less.process(args.input_file)
 

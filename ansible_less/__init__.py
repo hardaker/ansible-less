@@ -14,7 +14,14 @@ except Exception:
 class AnsibleLess:
     """Parses ansible log files and removes the boring 'it worked' bits."""
 
-    def __init__(self, show_headers: bool = False):
+    def __init__(
+        self,
+        show_headers: bool = False,
+        strip_prefixes: bool = True,
+        display_by_groups: bool = True,
+        group_oks: bool = True,
+        status_prefix: str = ">",
+    ):
         """Create an AnsibleLess instance."""
         self.printers = {
             "HEADER": self.print_nothing,
@@ -27,6 +34,48 @@ class AnsibleLess:
 
         if show_headers:
             self.printers["HEADER"] = self.print_section
+
+        self.strip_prefixes = strip_prefixes
+        self.display_by_groups = display_by_groups
+        self.group_oks = group_oks
+        self.status_prefix = status_prefix
+
+    @property
+    def strip_prefixes(self) -> bool:
+        """Remove the date/time/etc prefixes of each line."""
+        return self._strip_prefixes
+
+    @strip_prefixes.setter
+    def strip_prefixes(self, newval: bool) -> None:
+        self._strip_prefixes = newval
+
+    @property
+    def group_by_hosts(self) -> bool:
+        """Group hosts with similar output together."""
+        return self._group_by_hosts
+
+    @group_by_hosts.setter
+    def group_by_hosts(self, newval: bool) -> None:
+        self._group_by_hosts = newval
+
+    @property
+    def group_oks(self) -> bool:
+        """Group ok: lines from different hosts into just a count."""
+        return self._group_oks
+
+    @group_oks.setter
+    def group_oks(self, newval: bool) -> None:
+        self._group_oks = newval
+        
+    @property
+    def status_prefix(self) -> str:
+        """Add this string to the beginning of all lines referencing hosts."""
+        return self._status_prefix
+
+    @status_prefix.setter
+    def status_prefix(self, newval: str) -> None:
+        self._status_prefix = newval
+
 
     @property
     def printers(self) -> dict[str, callable]:
@@ -121,10 +170,6 @@ class AnsibleLess:
     def print_section(
         self,
         lines: list[str],
-        strip_prefixes: bool = True,
-        display_by_groups: bool = True,
-        group_oks: bool = True,
-        status_prefix: str = ">",
     ) -> None:
         """Print a section of information after grouping it by hosts and cleaning."""
         # TODO(hardaker): make an CLI option for strip_prefixes
@@ -132,10 +177,10 @@ class AnsibleLess:
         # TODO(hardaker): make an CLI option for group_oks
 
         # print("------------------------")
-        if strip_prefixes:
+        if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
 
-        if display_by_groups:
+        if self.display_by_groups:
             task_line = lines.pop(0)
             task_line = re.sub(r"\**$", "", task_line)
             print("==== " + task_line)
@@ -145,18 +190,18 @@ class AnsibleLess:
             sorted_keys = sorted(groupings, key=lambda x: groupings[x]["lines"])
             last_key = None
 
-            if group_oks:
+            if self.group_oks:
                 # group 'ok' statuses into a single report line with a count
                 ok_count = len(
                     [x for x in sorted_keys if groupings[x]["status"] == "ok"]
                 )
                 if ok_count > 0:
-                    buffer.append(f"{status_prefix} ok: {ok_count} hosts\n")
+                    buffer.append(f"{self.status_prefix} ok: {ok_count} hosts\n")
 
             for key in sorted_keys:
-                if group_oks and groupings[key]["status"] == "ok":
+                if self.group_oks and groupings[key]["status"] == "ok":
                     continue
-                status_line = f"{status_prefix} {groupings[key]['status']}: {key}:\n"
+                status_line = f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"
                 if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:
                     buffer.insert(-1, status_line)
                     continue

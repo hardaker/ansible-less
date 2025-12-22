@@ -26,7 +26,7 @@ dependencies = [
 # "traffic_taffy.iana" = ['tables.msgpak']
 
 [project.scripts]
-ansible-less = "ansible_less.ansible_less:main"
+ansible-less = "ansible_less.tools.ansible_less_cli:main"
 
 [project.urls]
 Homepage = "https://github.com/hardaker/ansible-less"

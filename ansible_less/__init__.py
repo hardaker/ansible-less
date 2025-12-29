@@ -4,7 +4,7 @@ from __future__ import annotations
 import re
 import sys
 
-__VERSION__ = "0.0.2"
+__VERSION__ = "0.0.3"
 
 try:
     from rich import print as pretty_print

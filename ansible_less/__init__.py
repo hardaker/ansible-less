@@ -157,12 +157,14 @@ class AnsibleLess:
                 r"(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
             ):
                 # print("FOUND: " + results.group(1) + " -- " + results.group(2))
+                group_host = results.group(2)
+                if str(group_host) not in groupings:
+                    groupings[str(group_host)] = {
+                        "status": str(results.group(1)),
+                        "lines": self.filter_lines(group_lines),
+                    }
                 if results.group(3) != "":
-                    group_lines.insert(0, results.group(3) + "\n")
-                groupings[str(results.group(2))] = {
-                    "status": str(results.group(1)),
-                    "lines": self.filter_lines(group_lines),
-                }
+                    groupings[group_host]['lines'].append(results.group(3) + "\n")
                 group_lines = []
             else:
                 group_lines.append(line)

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 import re
+import sys
 
 __VERSION__ = "0.0.2"
 
@@ -23,6 +24,7 @@ class AnsibleLess:
         group_skipped: bool = True,
         display_all_sections: bool = False,
         status_prefix: str = ">",
+        output_to: IO[str] = sys.stdout,
     ):
         """Create an AnsibleLess instance."""
         self.printers = {
@@ -41,7 +43,8 @@ class AnsibleLess:
         self.group_skipped = group_skipped
         self.status_prefix = status_prefix
         self.display_all_sections = display_all_sections
-        
+        self.output_to = output_to
+
         self.hosts = []
 
     @property
@@ -97,6 +100,15 @@ class AnsibleLess:
     @printers.setter
     def printers(self, newval: dict[str, callable]) -> None:
         self._printers = newval
+
+    def print(self, data):
+        if getattr(self.output_to, "print", None):
+            self.output_to.print(data)
+        else:
+            self.output_to.write(data)
+
+    def pretty_print(self, data):  ## TODO(hardaker): use rich for this printing
+        self.print(data)
 
     def clean_blanks(self, lines: list[str]) -> list[str]:
         """Drop trailing blank lines from a list of lines."""
@@ -164,7 +176,7 @@ class AnsibleLess:
                         "lines": self.filter_lines(group_lines),
                     }
                 if results.group(3) != "":
-                    groupings[group_host]['lines'].append(results.group(3) + "\n")
+                    groupings[group_host]["lines"].append(results.group(3) + "\n")
                 group_lines = []
             else:
                 group_lines.append(line)
@@ -195,7 +207,7 @@ class AnsibleLess:
         # TODO(hardaker): make an CLI option for display_by_groups
         # TODO(hardaker): make an CLI option for group_oks
 
-        # print("------------------------")
+        # print("------------------------", file=self.output_to)
         if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
 
@@ -203,7 +215,7 @@ class AnsibleLess:
             # print the task itself
             task_line = lines.pop(0)
             task_line = re.sub(r"\**$", "", task_line)
-            print("==== " + task_line)
+            self.print("==== " + task_line)
 
             buffer = []
             groupings = self.group_by_hosts(lines)
@@ -227,7 +239,7 @@ class AnsibleLess:
                         buffer.append(f"{self.status_prefix} ok: all hosts\n")
                     elif ok_count > 0:
                         buffer.append(f"{self.status_prefix} ok: {ok_count} hosts\n")
-                    skip_headers.add('ok')
+                    skip_headers.add("ok")
 
             if self.group_skipped:
                 # group 'skipped' statuses into a single report line with a count
@@ -238,8 +250,10 @@ class AnsibleLess:
                     if len(self.hosts) > 0 and skipped_count == len(self.hosts):
                         buffer.append(f"{self.status_prefix} skipped: all hosts\n")
                     elif skipped_count > 0:
-                        buffer.append(f"{self.status_prefix} skipped: {skipped_count} hosts\n")
-                    skip_headers.add('skipping')
+                        buffer.append(
+                            f"{self.status_prefix} skipped: {skipped_count} hosts\n"
+                        )
+                    skip_headers.add("skipping")
 
             if True:  # bogus just for consistent indentation till refactor
                 # group 'changed' statuses into a single report line with a count
@@ -272,14 +286,14 @@ class AnsibleLess:
                 buffer.append(status_line)
                 buffer.append("".join(groupings[key]["lines"]))
                 last_key = key
-            print("".join(buffer))
+            self.print("".join(buffer))
         else:
-            print("".join(lines))
+            self.print("".join(lines))
 
     def print_header(self, lines: list[str]) -> None:
         """Print the header lines and calculate full host list."""
         if self.show_header:
-            print("".join(lines))
+            self.print("".join(lines))
 
     def print_nothing(self, _lines: list[str]) -> None:
         """Do nothing."""
@@ -296,7 +310,7 @@ class AnsibleLess:
 
     def print_trailer(self, lines: list[str]) -> None:
         """Print the final section."""
-        pretty_print("".join(lines))
+        self.pretty_print("".join(lines))
 
     def process(self, input_file) -> None:
         """Read a stream of input lines, process them and print results."""

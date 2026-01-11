@@ -24,6 +24,7 @@ class AnsibleLess:
         group_skipped: bool = True,
         display_all_sections: bool = False,
         status_prefix: str = ">",
+        debug: bool = True,
     ):
         """Create an AnsibleLess instance."""
         self.printers = {
@@ -42,7 +43,8 @@ class AnsibleLess:
         self.group_skipped = group_skipped
         self.status_prefix = status_prefix
         self.display_all_sections = display_all_sections
-        
+        self.debug = debug
+
         self.hosts = []
 
     @property
@@ -236,6 +238,11 @@ class AnsibleLess:
         # TODO(hardaker): make an CLI option for strip_prefixes
         # TODO(hardaker): make an CLI option for display_by_groups
         # TODO(hardaker): make an CLI option for group_oks
+
+        if self.debug:
+            print("=======================================")
+            print("".join(lines))
+            print("=====----------------------------------")
 
         # print("------------------------")
         if self.strip_prefixes:

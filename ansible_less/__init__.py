@@ -1,6 +1,7 @@
 """Parses ansible log files and removes the boring 'it worked' bits."""
 
 from __future__ import annotations
+from logging import debug
 import re
 
 __VERSION__ = "0.0.2"
@@ -174,6 +175,49 @@ class AnsibleLess:
         if self.display_all_sections:
             return True
 
+        # this is really "check_boring"
+
+        boring_line_pieces = ["Gathering", "Facts", "ok:"]
+
+        # find any line that we can't classify as boring, if so return True
+        import pdb ;
+
+        for line in [x.strip() for x in lines]:
+            line_is_boring: bool = False
+
+            # check empty
+            if line == '':
+                line_is_boring = True
+                continue  # just continue here, it is
+
+            # check for boring words in a line
+            for word in boring_line_pieces:
+                if word in line:
+                    line_is_boring = True
+                    debug(f"found boring word: {word}")
+                    break
+
+            # should be able to do this with a fancy for/else thingy
+            if line_is_boring:
+                continue  # it is
+
+            # check if it looks like a host line
+            if re.match(r'^\[\w+\]$', line):
+                debug("line is a host")
+                continue
+
+            # find display lines
+            if re.match(r'^\**$', line):
+                debug("separator line")
+                continue
+
+            # this line isn't boring, thus the whole group is important
+            return True
+
+        # every line was flagged as boring, so it's not important
+        return False
+
+        # OLD
         for line in lines:
             if "changed:" in line:
                 return True

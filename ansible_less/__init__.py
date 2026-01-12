@@ -12,6 +12,11 @@ try:
 except Exception:
     pretty_print = print
 
+try:
+    import rich.console
+except Exception:
+    pass
+
 
 class AnsibleLess:
     """Parses ansible log files and removes the boring 'it worked' bits."""
@@ -19,13 +24,14 @@ class AnsibleLess:
     def __init__(
         self,
         show_header: bool = False,
+        show_trailer: bool = False,
         strip_prefixes: bool = True,
         display_by_groups: bool = True,
         group_oks: bool = True,
         group_skipped: bool = True,
         display_all_sections: bool = False,
-        status_prefix: str = ">",
-        debug: bool = True,
+        status_prefix: str = ":",
+        debug: bool = False,
         output_to: IO[str] = sys.stdout,
     ):
         """Create an AnsibleLess instance."""
@@ -39,6 +45,7 @@ class AnsibleLess:
         self.current_lines: list[str] = []
 
         self.show_header = show_header
+        self.show_trailer = show_trailer
         self.strip_prefixes = strip_prefixes
         self.display_by_groups = display_by_groups
         self.group_oks = group_oks
@@ -109,6 +116,11 @@ class AnsibleLess:
             self.output_to.print(data)
         else:
             self.output_to.write(data)
+
+    def escape(self, line: str) -> str:
+        if getattr(self.output_to, "print", None):
+            return rich.console.escape(line)
+        return line
 
     def pretty_print(self, data):  ## TODO(hardaker): use rich for this printing
         self.print(data)
@@ -193,16 +205,23 @@ class AnsibleLess:
 
         # this is really "check_boring"
 
-        boring_line_pieces = ["Gathering", "Facts", "ok:"]
+        boring_line_pieces = [
+            "Gathering",
+            "Facts",
+            "ok:",
+            "PLAY",
+            "skipping:",
+            "Nothing to do",
+        ]
+        boring_line_pieces.extend(list(self.printers.keys()))
 
         # find any line that we can't classify as boring, if so return True
-        import pdb ;
-
-        for line in [x.strip() for x in lines]:
+        # note: stripping off prefixes
+        for line in [re.sub(r"^[^|]*\s*\| ", "", line.strip()) for line in lines]:
             line_is_boring: bool = False
 
             # check empty
-            if line == '':
+            if line == "":
                 line_is_boring = True
                 continue  # just continue here, it is
 
@@ -218,30 +237,29 @@ class AnsibleLess:
                 continue  # it is
 
             # check if it looks like a host line
-            if re.match(r'^\[\w+\]$', line):
+            if re.match(r"^\[\w+\]$", line):
                 debug("line is a host")
                 continue
 
             # find display lines
-            if re.match(r'^\**$', line):
+            if re.match(r"^\[*=-]*$", line):
                 debug("separator line")
                 continue
 
+            # drop date only lines
+            if re.match(r"^\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}", line):
+                debug("date only line")
+                continue
             # this line isn't boring, thus the whole group is important
+            if self.debug:
+                self.print(f"  IMPORTANT: {line}")
             return True
 
         # every line was flagged as boring, so it's not important
-        return False
-
-        # OLD
-        for line in lines:
-            if "changed:" in line:
-                return True
-            if "FAILED" in line or "fatal" in line or "failed" in line:
-                return True
-            if "WARNING" in line:
-                return True
-
+        if self.debug:
+            self.print("BORING:")
+            for line in lines:
+                self.print(f"  B: {line.strip()}")
         return False
 
     def print_section(
@@ -254,9 +272,9 @@ class AnsibleLess:
         # TODO(hardaker): make an CLI option for group_oks
 
         if self.debug:
-            print("=======================================", file=self.output_to)
-            print("".join(lines), file=self.output_to)
-            print("=====----------------------------------", file=self.output_to)
+            self.print("=======================================")
+            self.print("".join(lines))
+            self.print("=====----------------------------------")
 
         if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
@@ -264,8 +282,10 @@ class AnsibleLess:
         if self.display_by_groups:
             # print the task itself
             task_line = lines.pop(0)
-            task_line = re.sub(r"\**$", "", task_line)
-            self.print("==== " + task_line)
+            task_line = re.sub(r"\**$", "", task_line.strip())
+            # task_line = re.sub("\\]", "\]", task_line)
+            task_line = re.sub("\\[", "\[", task_line)
+            self.print("==== " + self.escape(task_line))
 
             buffer = []
             groupings = self.group_by_hosts(lines)
@@ -360,7 +380,8 @@ class AnsibleLess:
 
     def print_trailer(self, lines: list[str]) -> None:
         """Print the final section."""
-        self.pretty_print("".join(lines))
+        if self.show_trailer:
+            self.pretty_print("".join(lines))
 
     def process(self, input_file) -> None:
         """Read a stream of input lines, process them and print results."""

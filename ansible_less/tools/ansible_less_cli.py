@@ -44,6 +44,20 @@ def parse_args() -> Namespace:
     )
 
     parser.add_argument(
+        "-o",
+        "--output-to",
+        type=FileType("w"),
+        help="A file to write results to instead of using the pager",
+    )
+
+    parser.add_argument(
+        "-s",
+        "--stdout",
+        action="store_true",
+        help="Just print the results to stdout, and don't use a pager",
+    )
+
+    parser.add_argument(
         "--log-level",
         "--ll",
         default="info",
@@ -85,9 +99,20 @@ def parse_args() -> Namespace:
 def main():
     args = parse_args()
 
-    ansible_less = AnsibleLess(show_header=args.show_header)
+    # TODO(hardaker): clean this up
+    if not args.output_to and not args.stdout:
+        console = Console()
+        with console.pager():
+            ansible_less = AnsibleLess(show_header=args.show_header, output_to=console)
+            ansible_less.process(args.input_file)
+    else:
+        output_to = args.output_to
+        if args.stdout:
+            output_to = sys.stdout
+        ansible_less = AnsibleLess(show_header=args.show_header, output_to=output_to)
+        ansible_less.process(args.input_file)
 
-    ansible_less.process(args.input_file)
+    output_to = args.output_to
 
 
 if __name__ == "__main__":

@@ -364,7 +364,7 @@ class AnsibleLess:
 
             # escape the []s since rich interprets them otherwise
             # task_line = re.sub("\\]", "\]", task_line)
-            task_line = re.sub("\\[", "\[", task_line)
+            task_line = re.sub("\\[", "\\[", task_line)
 
             self.print("==== " + self.escape(task_line))
 

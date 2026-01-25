@@ -340,7 +340,7 @@ class AnsibleLess:
                 if changed_count > 1:
                     if len(self.hosts) > 0 and changed_count == len(self.hosts):
                         buffer.append(f"{self.status_prefix} changed: all hosts\n")
-                    skip_headers.add("changed")
+                        skip_headers.add("changed")
 
             if True:  # bogus just for consistent indentation till refactor
                 # group 'failed' statuses into a single report line with a count
@@ -350,6 +350,7 @@ class AnsibleLess:
                 if failed_count > 1:
                     if len(self.hosts) > 0 and failed_count == len(self.hosts):
                         buffer.append(f"{self.status_prefix} failed: all hosts\n")
+                        skip_headers.add("failed")
 
 
             # if everything was ok or skipped, don't print it at all.

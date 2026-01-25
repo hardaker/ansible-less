@@ -179,17 +179,28 @@ class AnsibleLess:
         """Take a collection of ansible log lines and group them by hostname."""
         groupings = {}
         group_lines = []
-        for line in lines:
+        group_host = None
+        for n, line in enumerate(lines):
+            if line == "":
+                continue
+            if "...ignoring" in line:
+                # this is actually for the previous host, not the next
+                groupings[group_host]["lines"].append(line)
+                continue
             if results := re.match(
                 r"(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
             ):
                 # print("FOUND: " + results.group(1) + " -- " + results.group(2))
-                group_host = results.group(2)
-                if str(group_host) not in groupings:
-                    groupings[str(group_host)] = {
+                group_host = str(results.group(2))
+                if group_host not in groupings:
+                    groupings[group_host] = {
                         "status": str(results.group(1)),
                         "lines": self.filter_lines(group_lines),
                     }
+                else:
+                    # TODO(hardaker): what if there is an ok and a failure // take the worst and update the status!
+                    pass
+                    
                 if results.group(3) != "":
                     groupings[group_host]["lines"].append(results.group(3) + "\n")
                 group_lines = []
@@ -282,10 +293,6 @@ class AnsibleLess:
         if self.display_by_groups:
             # print the task itself
             task_line = lines.pop(0)
-            task_line = re.sub(r"\**$", "", task_line.strip())
-            # task_line = re.sub("\\]", "\]", task_line)
-            task_line = re.sub("\\[", "\[", task_line)
-            self.print("==== " + self.escape(task_line))
 
             buffer = []
             groupings = self.group_by_hosts(lines)
@@ -294,15 +301,15 @@ class AnsibleLess:
             if len(self.hosts) == 0:
                 self.hosts = list(groupings.keys())
 
-            # print the contents
-            sorted_keys = sorted(groupings, key=lambda x: groupings[x]["lines"])
-            last_key = None
+            # sort the hostnames based on text
+            sorted_hosts = sorted(groupings, key=lambda x: groupings[x]["lines"])
+            last_host = None
             skip_headers = set()
 
             if self.group_oks:
                 # group 'ok' statuses into a single report line with a count
                 ok_count = len(
-                    [x for x in sorted_keys if groupings[x]["status"] == "ok"]
+                    [x for x in sorted_hosts if groupings[x]["status"] == "ok"]
                 )
                 if ok_count > 1:
                     if len(self.hosts) > 0 and ok_count == len(self.hosts):
@@ -314,7 +321,7 @@ class AnsibleLess:
             if self.group_skipped:
                 # group 'skipped' statuses into a single report line with a count
                 skipped_count = len(
-                    [x for x in sorted_keys if groupings[x]["status"] == "skipping"]
+                    [x for x in sorted_hosts if groupings[x]["status"] == "skipping"]
                 )
                 if skipped_count > 1:
                     if len(self.hosts) > 0 and skipped_count == len(self.hosts):
@@ -328,7 +335,7 @@ class AnsibleLess:
             if True:  # bogus just for consistent indentation till refactor
                 # group 'changed' statuses into a single report line with a count
                 changed_count = len(
-                    [x for x in sorted_keys if groupings[x]["status"] == "changed"]
+                    [x for x in sorted_hosts if groupings[x]["status"] == "changed"]
                 )
                 if changed_count > 1:
                     if len(self.hosts) > 0 and changed_count == len(self.hosts):
@@ -338,24 +345,40 @@ class AnsibleLess:
             if True:  # bogus just for consistent indentation till refactor
                 # group 'failed' statuses into a single report line with a count
                 failed_count = len(
-                    [x for x in sorted_keys if groupings[x]["status"] == "failed"]
+                    [x for x in sorted_hosts if groupings[x]["status"] == "failed"]
                 )
                 if failed_count > 1:
                     if len(self.hosts) > 0 and failed_count == len(self.hosts):
                         buffer.append(f"{self.status_prefix} failed: all hosts\n")
 
-            for key in sorted_keys:
-                if groupings[key]["status"] in skip_headers:
+
+            # if everything was ok or skipped, don't print it at all.
+            if failed_count == 0 and changed_count == 0:
+                return
+
+            # actually print the task at this point
+
+            # strip off trailing garbage
+            task_line = re.sub(r"\**$", "", task_line.strip())
+
+            # escape the []s since rich interprets them otherwise
+            # task_line = re.sub("\\]", "\]", task_line)
+            task_line = re.sub("\\[", "\[", task_line)
+
+            self.print("==== " + self.escape(task_line))
+
+            for host in sorted_hosts:
+                if groupings[host]["status"] in skip_headers:
                     continue
                 status_line = (
-                    f"{self.status_prefix} {groupings[key]['status']}: {key}:\n"
+                    f"{self.status_prefix} {groupings[host]['status']}: {host}:\n"
                 )
-                if last_key and groupings[last_key]["lines"] == groupings[key]["lines"]:
+                if last_host and groupings[last_host]["lines"] == groupings[host]["lines"]:
                     buffer.insert(-1, status_line)
                     continue
                 buffer.append(status_line)
-                buffer.append("".join(groupings[key]["lines"]))
-                last_key = key
+                buffer.append("".join(groupings[host]["lines"]))
+                last_host = host
             self.print("".join(buffer))
         else:
             self.print("".join(lines))

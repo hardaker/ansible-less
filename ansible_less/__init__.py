@@ -5,7 +5,7 @@ from logging import debug
 import re
 import sys
 
-__VERSION__ = "0.0.3"
+__VERSION__ = "0.1.0"
 
 try:
     from rich import print as pretty_print

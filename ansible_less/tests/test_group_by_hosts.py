@@ -62,8 +62,6 @@ def test_multiple_statuses():
         ]
     )
 
-    print(results)
-
     for hostnum in range(1, 3):
         hostname = f"host{hostnum}.localhost"
         assert hostname in results
@@ -76,3 +74,33 @@ def test_multiple_statuses():
             f'=> (item=templateout3.conf)\n',
             f'=> (item=templateout4.conf)\n',
         ]
+
+def test_multiple_statuses():
+    al = AnsibleLess()
+    results = al.group_by_hosts(
+        [
+            'ok: [host1.localhost] => (item=templateout1.conf)\n',
+            'fatal: [host2.localhost] => (item=templateout1.conf)\n',
+            'ok: [host1.localhost] => (item=templateout2.conf)\n',
+            'ok: [host2.localhost] => (item=templateout2.conf)\n',
+            'ok: [host1.localhost] => (item=templateout3.conf)\n',
+            'changed: [host2.localhost] => (item=templateout3.conf)\n',
+            'ok: [host1.localhost] => (item=templateout4.conf)\n',
+            'ok: [host2.localhost] => (item=templateout4.conf)\n',
+        ]
+    )
+
+    assert results['host1.localhost']["status"] == "ok"
+    assert results['host2.localhost']["status"] == "fatal"
+    for hostnum in range(1, 3):
+        hostname = f"host{hostnum}.localhost"
+        assert hostname in results
+        assert "lines" in results[hostname]
+        assert "status" in results[hostname]
+        assert results[hostname]['lines'] == [
+            f'=> (item=templateout1.conf)\n',
+            f'=> (item=templateout2.conf)\n',
+            f'=> (item=templateout3.conf)\n',
+            f'=> (item=templateout4.conf)\n',
+        ]
+        

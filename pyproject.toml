@@ -20,6 +20,7 @@ dependencies = [
     "rich",
     "rich-logging",
     "rich-argparse",
+    "argparse-with-config",
 ]
 
 # [project.package_data]

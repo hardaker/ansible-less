@@ -4,6 +4,7 @@ from __future__ import annotations
 from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter, FileType, Namespace
 from logging import debug, info, warning, error, critical
 from collections import defaultdict
+from argparse_with_config import ArgumentParserWithConfig
 import logging
 import sys
 import re
@@ -32,40 +33,71 @@ from ansible_less import AnsibleLess
 
 def parse_args() -> Namespace:
     """Parse the command line arguments."""
-    parser = ArgumentParser(
+    parser = ArgumentParserWithConfig(
         formatter_class=help_handler, description=__doc__, epilog="Example Usage: "
     )
 
-    parser.add_argument(
+    group = parser.add_argument_group("display", config_path="display")
+
+    group.add_argument(
         "-H",
         "--show-header",
         action="store_true",
         help="Shows the top header from the file too.",
+        config_path="show_header",
     )
 
-    parser.add_argument(
+    group.add_argument(
+        "-T",
+        "--show-trailer",
+        action="store_true",
+        help="Shows the trailer from the file too.",
+        config_path="show_trailer",
+    )
+
+    group.add_argument(
+        "-P",
+        "--dont-show-prefixes",
+        action="store_true",
+        help="Do not strip the '|' line prefixes (dates, processes, users, ...).",
+        config_path="dont_strip_prefixes",
+    )
+
+    group = parser.add_argument_group("output", config_path="output")
+
+    group.add_argument(
         "-o",
         "--output-to",
         type=FileType("w"),
         help="A file to write results to instead of using the pager",
+        config_path="output_to",
     )
 
-    parser.add_argument(
+    group.add_argument(
         "-s",
         "--stdout",
         action="store_true",
         help="Just print the results to stdout, and don't use a pager",
+        config_path="stdout",
     )
 
-    parser.add_argument(
+    group = parser.add_argument_group("debugging", config_path="debug")
+
+    group.add_argument(
         "--log-level",
         "--ll",
         default="info",
         help="Define the logging verbosity level (debug, info, warning, error, fotal, critical).",
+        config_path="log_level",
     )
 
     parser.add_argument(
-        "input_file", type=FileType("r"), nargs="?", default=sys.stdin, help=""
+        "input_file",
+        type=FileType("r"),
+        nargs="?",
+        default=sys.stdin,
+        help="Input log file to parse and display",
+        config_path="input_file",
     )
 
     args = parser.parse_args()
@@ -93,23 +125,25 @@ def parse_args() -> Namespace:
     logging.basicConfig(
         level=log_level, format=messagefmt, datefmt=datefmt, handlers=handlers
     )
-    return args
+
+    return (args, parser.config)
 
 
 def main():
-    args = parse_args()
+    (args, config) = parse_args()
 
     # TODO(hardaker): clean this up
     if not args.output_to and not args.stdout:
         console = Console()
         with console.pager():
-            ansible_less = AnsibleLess(show_header=args.show_header, output_to=console)
+            ansible_less = AnsibleLess(config=config,
+                                       output_to=console)
             ansible_less.process(args.input_file)
     else:
         output_to = args.output_to
         if args.stdout:
             output_to = sys.stdout
-        ansible_less = AnsibleLess(show_header=args.show_header, output_to=output_to)
+        ansible_less = AnsibleLess(config=config, output_to=output_to)
         ansible_less.process(args.input_file)
 
     output_to = args.output_to

@@ -23,9 +23,7 @@ class AnsibleLess:
 
     def __init__(
         self,
-        show_header: bool = False,
-        show_trailer: bool = False,
-        strip_prefixes: bool = True,
+        config: dict = None,
         display_by_groups: bool = True,
         group_oks: bool = True,
         group_skipped: bool = True,
@@ -44,9 +42,9 @@ class AnsibleLess:
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
-        self.show_header = show_header
-        self.show_trailer = show_trailer
-        self.strip_prefixes = strip_prefixes
+        self.show_header = config['display']['show_header']
+        self.show_trailer = config['display']['show_trailer']
+        self.strip_prefixes = not config['display']['dont_strip_prefixes']
         self.display_by_groups = display_by_groups
         self.group_oks = group_oks
         self.group_skipped = group_skipped
@@ -67,13 +65,13 @@ class AnsibleLess:
         self._strip_prefixes = newval
 
     @property
-    def group_by_hosts(self) -> bool:
+    def display_by_groups(self) -> bool:
         """Group hosts with similar output together."""
-        return self._group_by_hosts
+        return self._display_by_groups
 
-    @group_by_hosts.setter
-    def group_by_hosts(self, newval: bool) -> None:
-        self._group_by_hosts = newval
+    @display_by_groups.setter
+    def display_by_groups(self, newval: bool) -> None:
+        self._display_by_groups = newval
 
     @property
     def group_oks(self) -> bool:
@@ -188,7 +186,7 @@ class AnsibleLess:
                 groupings[group_host]["lines"].append(line)
                 continue
             if results := re.match(
-                r"(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
+                r".*(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
             ):
                 # print("FOUND: " + results.group(1) + " -- " + results.group(2))
                 group_host = str(results.group(2))
@@ -199,7 +197,7 @@ class AnsibleLess:
                     }
                 else:
                     # TODO(hardaker): what if there is an ok and a failure // take the worst and update the status!
-                    pass
+                    groupings[group_host]['lines'].extend(group_lines)
                     
                 if results.group(3) != "":
                     groupings[group_host]["lines"].append(results.group(3) + "\n")

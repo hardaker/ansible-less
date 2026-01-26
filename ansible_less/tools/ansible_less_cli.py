@@ -95,14 +95,13 @@ def parse_args() -> Namespace:
         help="Do not group ok hosts together",
         config_path="dont_group_oks",
     )
-    
+
     group.add_argument(
         "--dont-group-skipped",
         action="store_true",
         help="Do not group ok hosts together",
         config_path="dont_group_skipped",
     )
-    
 
     group = parser.add_argument_group("output", config_path="output")
 
@@ -177,8 +176,7 @@ def main():
     if not args.output_to and not args.stdout:
         console = Console()
         with console.pager():
-            ansible_less = AnsibleLess(config=config,
-                                       output_to=console)
+            ansible_less = AnsibleLess(config=config, output_to=console)
             ansible_less.process(args.input_file)
     else:
         output_to = args.output_to

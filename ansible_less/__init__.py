@@ -20,18 +20,18 @@ except Exception:
 
 
 default_config = {
-    'display': {
-        'prefix': ":",
-        'all_sections': False,
-        'show_header': False,
-        'show_trailer': False,
-        'dont_strip_prefixes': False,
+    "display": {
+        "status_prefix": ":",
+        "all_sections": False,
+        "show_header": False,
+        "show_trailer": False,
+        "dont_strip_prefixes": False,
     },
-    'groupings': {
-        'dont_use_groupings': False,
-        'dont_group_oks': False,
-        'dont_group_skipped': False,
-    }
+    "groupings": {
+        "dont_use_groupings": False,
+        "dont_group_oks": False,
+        "dont_group_skipped": False,
+    },
 }
 
 
@@ -54,15 +54,15 @@ class AnsibleLess:
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
-        self.show_header = config['display']['show_header']
-        self.show_trailer = config['display']['show_trailer']
-        self.strip_prefixes = not config['display']['dont_strip_prefixes']
-        self.status_prefix = config['display']['status_prefix']
-        self.display_all_sections = config['display']['all_sections']
+        self.show_header = config["display"]["show_header"]
+        self.show_trailer = config["display"]["show_trailer"]
+        self.strip_prefixes = not config["display"]["dont_strip_prefixes"]
+        self.status_prefix = config["display"]["status_prefix"]
+        self.display_all_sections = config["display"]["all_sections"]
 
-        self.display_by_groups = not config['groupings']['dont_use_groupings']
-        self.group_oks = not config['groupings']['dont_group_oks']
-        self.group_skipped = not config['groupings']['dont_group_skipped']
+        self.display_by_groups = not config["groupings"]["dont_use_groupings"]
+        self.group_oks = not config["groupings"]["dont_group_oks"]
+        self.group_skipped = not config["groupings"]["dont_group_skipped"]
 
         self.debug = debug
         self.output_to = output_to
@@ -195,9 +195,9 @@ class AnsibleLess:
         group_host = None
 
         replacement_statuses = {
-            'changed': { 'ok': True, 'skipping': True },
-            'failed': {'ok': True, 'changed': True, 'skipping': True},
-            'fatal': {'ok': True, 'changed': True, 'skipping': True, 'failed': True},
+            "changed": {"ok": True, "skipping": True},
+            "failed": {"ok": True, "changed": True, "skipping": True},
+            "fatal": {"ok": True, "changed": True, "skipping": True, "failed": True},
         }
 
         for n, line in enumerate(lines):
@@ -221,13 +221,17 @@ class AnsibleLess:
                     }
                 else:
                     # TODO(hardaker): what if there is an ok and a failure // take the worst and update the status!
-                    groupings[group_host]['lines'].extend(group_lines)
-                    if status in replacement_statuses and groupings[group_host]['status'] in replacement_statuses[status]:
-                        groupings[group_host]['status'] = status
+                    groupings[group_host]["lines"].extend(group_lines)
+                    if (
+                        status in replacement_statuses
+                        and groupings[group_host]["status"]
+                        in replacement_statuses[status]
+                    ):
+                        groupings[group_host]["status"] = status
 
                 # start collecting lines again for the next host
                 group_lines = []
-                    
+
                 if suffix != "" and status != "ok" and status != "skipping":
                     groupings[group_host]["lines"].append(suffix + "\n")
             else:
@@ -389,7 +393,12 @@ class AnsibleLess:
                         skip_headers.add("fatal")
 
             # if everything was ok or skipped, don't print it at all.
-            if not self.display_all_sections and fatal_count == 0 and failed_count == 0 and changed_count == 0:
+            if (
+                not self.display_all_sections
+                and fatal_count == 0
+                and failed_count == 0
+                and changed_count == 0
+            ):
                 return
 
             # actually print the task at this point
@@ -409,7 +418,10 @@ class AnsibleLess:
                 status_line = (
                     f"{self.status_prefix} {groupings[host]['status']}: {host}:\n"
                 )
-                if last_host and groupings[last_host]["lines"] == groupings[host]["lines"]:
+                if (
+                    last_host
+                    and groupings[last_host]["lines"] == groupings[host]["lines"]
+                ):
                     buffer.insert(-1, status_line)
                     continue
                 buffer.append(status_line)

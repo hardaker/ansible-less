@@ -374,9 +374,18 @@ class AnsibleLess:
                         buffer.append(f"{self.status_prefix} failed: all hosts\n")
                         skip_headers.add("failed")
 
+            if True:  # bogus just for consistent indentation till refactor
+                # group 'fatal' statuses into a single report line with a count
+                fatal_count = len(
+                    [x for x in sorted_hosts if groupings[x]["status"] == "fatal"]
+                )
+                if fatal_count > 1:
+                    if len(self.hosts) > 0 and fatal_count == len(self.hosts):
+                        buffer.append(f"{self.status_prefix} fatal: all hosts\n")
+                        skip_headers.add("fatal")
 
             # if everything was ok or skipped, don't print it at all.
-            if failed_count == 0 and changed_count == 0:
+            if fatal_count == 0 and failed_count == 0 and changed_count == 0:
                 return
 
             # actually print the task at this point

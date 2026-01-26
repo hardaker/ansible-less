@@ -42,3 +42,37 @@ def test_test():
         assert "lines" in results[hostname]
         assert "status" in results[hostname]
         assert results[hostname]["status"] == ok_statuses.get(hostname, "changed")
+
+
+
+
+
+def test_multiple_statuses():
+    al = AnsibleLess()
+    results = al.group_by_hosts(
+        [
+            'ok: [host1.localhost] => (item=templateout1.conf)\n',
+            'ok: [host2.localhost] => (item=templateout1.conf)\n',
+            'ok: [host1.localhost] => (item=templateout2.conf)\n',
+            'ok: [host2.localhost] => (item=templateout2.conf)\n',
+            'changed: [host1.localhost] => (item=templateout3.conf)\n',
+            'changed: [host2.localhost] => (item=templateout3.conf)\n',
+            'ok: [host1.localhost] => (item=templateout4.conf)\n',
+            'ok: [host2.localhost] => (item=templateout4.conf)\n',
+        ]
+    )
+
+    print(results)
+
+    for hostnum in range(1, 3):
+        hostname = f"host{hostnum}.localhost"
+        assert hostname in results
+        assert "lines" in results[hostname]
+        assert "status" in results[hostname]
+        assert results[hostname]["status"] == "changed"
+        assert results[hostname]['lines'] == [
+            f'=> (item=templateout1.conf)\n',
+            f'=> (item=templateout2.conf)\n',
+            f'=> (item=templateout3.conf)\n',
+            f'=> (item=templateout4.conf)\n',
+        ]

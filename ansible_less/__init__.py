@@ -189,6 +189,13 @@ class AnsibleLess:
         groupings = {}
         group_lines = []
         group_host = None
+
+        replacement_statuses = {
+            'changed': { 'ok': True, 'skipping': True },
+            'failed': {'ok': True, 'changed': True, 'skipping': True},
+            'fatal': {'ok': True, 'changed': True, 'skipping': True, 'failed': True},
+        }
+
         for n, line in enumerate(lines):
             if line == "":
                 continue
@@ -197,24 +204,30 @@ class AnsibleLess:
                 groupings[group_host]["lines"].append(line)
                 continue
             if results := re.match(
-                r".*(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*(.*)", line
+                r".*(changed|ok|failed|fatal|skipping): \[([^]]+)\]:*\s*(.*)", line
             ):
                 # print("FOUND: " + results.group(1) + " -- " + results.group(2))
                 group_host = str(results.group(2))
+                status = str(results.group(1))
+                suffix = str(results.group(3))
                 if group_host not in groupings:
                     groupings[group_host] = {
-                        "status": str(results.group(1)),
+                        "status": status,
                         "lines": self.filter_lines(group_lines),
                     }
                 else:
                     # TODO(hardaker): what if there is an ok and a failure // take the worst and update the status!
                     groupings[group_host]['lines'].extend(group_lines)
-                    
-                if results.group(3) != "":
-                    groupings[group_host]["lines"].append(results.group(3) + "\n")
+                    if status in replacement_statuses and groupings[group_host]['status'] in replacement_statuses[status]:
+                        groupings[group_host]['status'] = status
+
+                # start collecting lines again for the next host
                 group_lines = []
-            else:
-                group_lines.append(line)
+                    
+                if suffix != "":
+                    groupings[group_host]["lines"].append(suffix + "\n")
+                else:
+                    group_lines.append(line)
         # rich.print(groupings)
         return groupings
 

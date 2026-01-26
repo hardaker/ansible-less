@@ -70,51 +70,6 @@ class AnsibleLess:
         self.hosts = []
 
     @property
-    def strip_prefixes(self) -> bool:
-        """Remove the date/time/etc prefixes of each line."""
-        return self._strip_prefixes
-
-    @strip_prefixes.setter
-    def strip_prefixes(self, newval: bool) -> None:
-        self._strip_prefixes = newval
-
-    @property
-    def display_by_groups(self) -> bool:
-        """Group hosts with similar output together."""
-        return self._display_by_groups
-
-    @display_by_groups.setter
-    def display_by_groups(self, newval: bool) -> None:
-        self._display_by_groups = newval
-
-    @property
-    def group_oks(self) -> bool:
-        """Group ok: lines from different hosts into just a count."""
-        return self._group_oks
-
-    @group_oks.setter
-    def group_oks(self, newval: bool) -> None:
-        self._group_oks = newval
-
-    @property
-    def group_skipped(self) -> bool:
-        """Group skipping: lines from different hosts into just a count."""
-        return self._group_skipped
-
-    @group_skipped.setter
-    def group_skipped(self, newval: bool) -> None:
-        self._group_skipped = newval
-
-    @property
-    def status_prefix(self) -> str:
-        """Add this string to the beginning of all lines referencing hosts."""
-        return self._status_prefix
-
-    @status_prefix.setter
-    def status_prefix(self, newval: str) -> None:
-        self._status_prefix = newval
-
-    @property
     def printers(self) -> dict[str, callable]:
         """The individual functions that do printing for a section."""
         return self._printers

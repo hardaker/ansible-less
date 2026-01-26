@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 from logging import debug
+from collections import defaultdict
 import re
 import sys
 
@@ -18,12 +19,21 @@ except Exception:
     pass
 
 
+default_config = {
+    'display': {
+        'show_header': False,
+        'show_trailer': False,
+        'dont_strip_prefixes': False,
+    }
+}
+
+
 class AnsibleLess:
     """Parses ansible log files and removes the boring 'it worked' bits."""
 
     def __init__(
         self,
-        config: dict = None,
+        config: dict | defaultdict = default_config,
         display_by_groups: bool = True,
         group_oks: bool = True,
         group_skipped: bool = True,
@@ -134,6 +144,7 @@ class AnsibleLess:
 
         - Drop lines containing just date strings.
         - Drop line portions containing diffs of tmpfile names
+        - Simplify some timestamps
         """
         line_counter = 0
         while line_counter < len(lines):

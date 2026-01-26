@@ -21,6 +21,8 @@ except Exception:
 
 default_config = {
     'display': {
+        'prefix': ":",
+        'all_sections': False,
         'show_header': False,
         'show_trailer': False,
         'dont_strip_prefixes': False,
@@ -39,8 +41,6 @@ class AnsibleLess:
     def __init__(
         self,
         config: dict | defaultdict = default_config,
-        display_all_sections: bool = False,
-        status_prefix: str = ":",
         debug: bool = False,
         output_to: IO[str] = sys.stdout,
     ):
@@ -57,13 +57,13 @@ class AnsibleLess:
         self.show_header = config['display']['show_header']
         self.show_trailer = config['display']['show_trailer']
         self.strip_prefixes = not config['display']['dont_strip_prefixes']
+        self.status_prefix = config['display']['status_prefix']
+        self.display_all_sections = config['display']['all_sections']
 
         self.display_by_groups = not config['groupings']['dont_use_groupings']
         self.group_oks = not config['groupings']['dont_group_oks']
         self.group_skipped = not config['groupings']['dont_group_skipped']
 
-        self.status_prefix = status_prefix
-        self.display_all_sections = display_all_sections
         self.debug = debug
         self.output_to = output_to
 
@@ -389,7 +389,7 @@ class AnsibleLess:
                         skip_headers.add("fatal")
 
             # if everything was ok or skipped, don't print it at all.
-            if fatal_count == 0 and failed_count == 0 and changed_count == 0:
+            if not self.display_all_sections and fatal_count == 0 and failed_count == 0 and changed_count == 0:
                 return
 
             # actually print the task at this point

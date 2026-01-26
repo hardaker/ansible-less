@@ -40,6 +40,23 @@ def parse_args() -> Namespace:
     group = parser.add_argument_group("display", config_path="display")
 
     group.add_argument(
+        "-p",
+        "--status-prefix",
+        help="Grouping lines prefix to use",
+        type=str,
+        default=":",
+        config_path="status_prefix",
+    )
+
+    group.add_argument(
+        "-a",
+        "--all-sections",
+        action="store_true",
+        help="Show all the sections.",
+        config_path="all_sections",
+    )
+
+    group.add_argument(
         "-H",
         "--show-header",
         action="store_true",

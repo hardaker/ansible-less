@@ -63,6 +63,30 @@ def parse_args() -> Namespace:
         config_path="dont_strip_prefixes",
     )
 
+    group = parser.add_argument_group("groupings", config_path="groupings")
+
+    group.add_argument(
+        "--dont-use-groupings",
+        action="store_true",
+        help="Do not group identical output from hosts together",
+        config_path="dont_use_groupings",
+    )
+
+    group.add_argument(
+        "--dont-group-oks",
+        action="store_true",
+        help="Do not group ok hosts together",
+        config_path="dont_group_oks",
+    )
+    
+    group.add_argument(
+        "--dont-group-skipped",
+        action="store_true",
+        help="Do not group ok hosts together",
+        config_path="dont_group_skipped",
+    )
+    
+
     group = parser.add_argument_group("output", config_path="output")
 
     group.add_argument(

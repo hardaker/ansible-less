@@ -24,6 +24,11 @@ default_config = {
         'show_header': False,
         'show_trailer': False,
         'dont_strip_prefixes': False,
+    },
+    'groupings': {
+        'dont_use_groupings': False,
+        'dont_group_oks': False,
+        'dont_group_skipped': False,
     }
 }
 
@@ -34,9 +39,6 @@ class AnsibleLess:
     def __init__(
         self,
         config: dict | defaultdict = default_config,
-        display_by_groups: bool = True,
-        group_oks: bool = True,
-        group_skipped: bool = True,
         display_all_sections: bool = False,
         status_prefix: str = ":",
         debug: bool = False,
@@ -55,9 +57,11 @@ class AnsibleLess:
         self.show_header = config['display']['show_header']
         self.show_trailer = config['display']['show_trailer']
         self.strip_prefixes = not config['display']['dont_strip_prefixes']
-        self.display_by_groups = display_by_groups
-        self.group_oks = group_oks
-        self.group_skipped = group_skipped
+
+        self.display_by_groups = not config['groupings']['dont_use_groupings']
+        self.group_oks = not config['groupings']['dont_group_oks']
+        self.group_skipped = not config['groupings']['dont_group_skipped']
+
         self.status_prefix = status_prefix
         self.display_all_sections = display_all_sections
         self.debug = debug

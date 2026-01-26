@@ -69,10 +69,7 @@ def test_multiple_statuses():
         assert "status" in results[hostname]
         assert results[hostname]["status"] == "changed"
         assert results[hostname]['lines'] == [
-            f'=> (item=templateout1.conf)\n',
-            f'=> (item=templateout2.conf)\n',
             f'=> (item=templateout3.conf)\n',
-            f'=> (item=templateout4.conf)\n',
         ]
 
 def test_multiple_statuses():
@@ -92,15 +89,16 @@ def test_multiple_statuses():
 
     assert results['host1.localhost']["status"] == "ok"
     assert results['host2.localhost']["status"] == "fatal"
+
+    assert results['host1.localhost']['lines'] == []
+    assert results['host2.localhost']['lines'] == [
+        f'=> (item=templateout1.conf)\n',
+        f'=> (item=templateout3.conf)\n',
+    ]
+
     for hostnum in range(1, 3):
         hostname = f"host{hostnum}.localhost"
         assert hostname in results
         assert "lines" in results[hostname]
         assert "status" in results[hostname]
-        assert results[hostname]['lines'] == [
-            f'=> (item=templateout1.conf)\n',
-            f'=> (item=templateout2.conf)\n',
-            f'=> (item=templateout3.conf)\n',
-            f'=> (item=templateout4.conf)\n',
-        ]
         

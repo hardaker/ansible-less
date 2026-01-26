@@ -51,6 +51,8 @@ class AnsibleLess:
             "HANDLER": self.maybe_print_task,
             "PLAY RECAP": self.print_task,
         }
+        self.config = config
+
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
@@ -68,6 +70,15 @@ class AnsibleLess:
         self.output_to = output_to
 
         self.hosts = []
+
+    @property
+    def config(self):
+        """The configuration settings of the AnsibleLess instance, including defaults."""
+        return self._config
+
+    @config.setter
+    def config(self, newval):
+        self._config = newval
 
     @property
     def printers(self) -> dict[str, callable]:

@@ -8,6 +8,7 @@ from argparse_with_config import ArgumentParserWithConfig
 import logging
 import sys
 import re
+import yaml
 
 # optionally use rich
 try:
@@ -124,6 +125,13 @@ def parse_args() -> Namespace:
     group = parser.add_argument_group("debugging", config_path="debug")
 
     group.add_argument(
+        "-C",
+        "--dump-config",
+        action="store_true",
+        help="Dump the default YAML configuration.",
+    )
+
+    group.add_argument(
         "--log-level",
         "--ll",
         default="info",
@@ -171,6 +179,11 @@ def parse_args() -> Namespace:
 
 def main():
     (args, config) = parse_args()
+
+    if args.dump_config:
+        al = AnsibleLess()
+        print(yaml.dump(al.config))
+        exit()
 
     # TODO(hardaker): clean this up
     if not args.output_to and not args.stdout:

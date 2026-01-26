@@ -150,6 +150,27 @@ becomes:
  => (item=server)
 ```
 
+# Configuration
+
+`ansible-less` has many command line options for tailoring the output,
+but also sports a YAML based configuration file.  Run `ansible-less
+--dump-config` to see the current settings, which can be saved to a
+file and passed in with the `--config` flag.
+
+``` text
+$ ansible-less --dump-config
+display:
+  all_sections: false
+  dont_strip_prefixes: false
+  show_header: false
+  show_trailer: false
+  status_prefix: ':'
+groupings:
+  dont_group_oks: false
+  dont_group_skipped: false
+  dont_use_groupings: false
+```
+
 # Testimonials
 
 > This amazing tool reduced a required post-ansible-playbook reading from 9987 lines to only 1475 lines.  How did I ever live without ansible-less?  -- The author

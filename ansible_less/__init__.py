@@ -224,7 +224,7 @@ class AnsibleLess:
                 # start collecting lines again for the next host
                 group_lines = []
                     
-                if suffix != "" and status != "ok":
+                if suffix != "" and status != "ok" and status != "skipping":
                     groupings[group_host]["lines"].append(suffix + "\n")
             else:
                 group_lines.append(line)

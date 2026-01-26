@@ -79,7 +79,7 @@ def test_multiple_statuses():
             'ok: [host1.localhost] => (item=templateout1.conf)\n',
             'fatal: [host2.localhost] => (item=templateout1.conf)\n',
             'ok: [host1.localhost] => (item=templateout2.conf)\n',
-            'ok: [host2.localhost] => (item=templateout2.conf)\n',
+            'skipping: [host2.localhost] => (item=templateout2.conf)\n',
             'ok: [host1.localhost] => (item=templateout3.conf)\n',
             'changed: [host2.localhost] => (item=templateout3.conf)\n',
             'ok: [host1.localhost] => (item=templateout4.conf)\n',

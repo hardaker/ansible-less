@@ -131,19 +131,20 @@ class AnsibleLess:
                 # note: don't increment line counter here, as we want the same spot
                 continue
 
-            # drop dates with fractional seconds for better aggregation
+            # shorten dates with fractional seconds for better aggregation
             current_line = re.sub(
                 r"(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2})\.\d+", "\\1", current_line
             )
 
-            # drop delta times
+            # shorten delta times
             current_line = re.sub(
                 r'("delta": "\d+:\d{2}:\d{2})\.\d+', "\\1", current_line
             )
 
-            # drop atime/mtime sub-second changes
+            # shorten atime/mtime sub-second changes
             current_line = re.sub(r'("[am]time": \d+)\.\d+', "\\1", current_line)
 
+            # shorten tmp file names
             current_line = re.sub(
                 r"(.*after:.*/.ansible/tmp/)[^/]+.*/", "\\1.../", current_line
             )
@@ -187,7 +188,7 @@ class AnsibleLess:
                     }
                 else:
                     # TODO(hardaker): what if there is an ok and a failure // take the worst and update the status!
-                    groupings[group_host]["lines"].extend(group_lines)
+                    groupings[group_host]["lines"].extend(self.filter_lines(group_lines))
                     if (
                         status in replacement_statuses
                         and groupings[group_host]["status"]

@@ -50,6 +50,7 @@ class AnsibleLess:
             "TASK": self.maybe_print_task,
             "HANDLER": self.maybe_print_task,
             "PLAY RECAP": self.print_task,
+            "[WARNING]:": self.print_warning,
         }
         self.config = config
 
@@ -70,6 +71,17 @@ class AnsibleLess:
         self.output_to = output_to
 
         self.hosts = []
+
+        self.boring_line_pieces = [
+            "Gathering",
+            "Facts",
+            "ok:",
+            "PLAY",
+            "skipping:",
+            "Nothing to do",
+        ]
+        self.boring_line_pieces.extend(list(self.printers.keys()))
+
 
     @property
     def config(self):
@@ -213,28 +225,18 @@ class AnsibleLess:
 
         # this is really "check_boring"
 
-        boring_line_pieces = [
-            "Gathering",
-            "Facts",
-            "ok:",
-            "PLAY",
-            "skipping:",
-            "Nothing to do",
-        ]
-        boring_line_pieces.extend(list(self.printers.keys()))
-
         # find any line that we can't classify as boring, if so return True
         # note: stripping off prefixes
-        for line in [re.sub(r"^[^|]*\s*\| ", "", line.strip()) for line in lines]:
+        for line in self.clean_lines(lines):
             line_is_boring: bool = False
 
             # check empty
             if line == "":
                 line_is_boring = True
-                continue  # just continue here, it is
+                continue  # just continue here, empty is boring
 
             # check for boring words in a line
-            for word in boring_line_pieces:
+            for word in self.boring_line_pieces:
                 if word in line:
                     line_is_boring = True
                     debug(f"found boring word: {word}")
@@ -258,6 +260,7 @@ class AnsibleLess:
             if re.match(r"^\w+ \d+ \w+ \d+  \d{2}:\d{2}:\d{2}", line):
                 debug("date only line")
                 continue
+
             # this line isn't boring, thus the whole group is important
             if self.debug:
                 self.print(f"  IMPORTANT: {line}")
@@ -411,6 +414,29 @@ class AnsibleLess:
         """Print a list of lines for a section."""
         self.print_section(lines)
 
+    def clean_lines(self, lines: list[str]) -> list[str]:
+        """Remove boring line prefixes."""
+        lines = [re.sub(r"^[^|]*\s*\| ", "", line.strip()) for line in lines]
+        lines = [re.sub(r"\**$", "", line) for line in lines]
+        lines = self.clean_blanks(lines)
+        return lines
+
+    def print_warning(self, lines: list[str]) -> None:
+        """prints warnings"""
+        for warning in self.filter_lines(self.clean_lines(lines)):
+            if warning == "":
+                continue
+            for word in self.boring_line_pieces:
+                if word == "[WARNING]:":
+                    continue
+                if word in warning:
+                    break
+            else:
+                self.print(warning)
+
+        self.print("")  # force blank line
+
+
     def maybe_print_task(self, lines: list[str]) -> None:
         """Print a task if it's important."""
         if self.check_important(lines):
@@ -427,11 +453,11 @@ class AnsibleLess:
         self.current_lines: list[str] = []
 
         for line in input_file:
-            for section_words in ["TASK", "HANDLER", "PLAY RECAP"]:
-                if line.startswith(section_words) or f" {section_words} " in line:
+            for section_word in ["TASK", "HANDLER", "PLAY RECAP", "[WARNING]:"]:
+                if line.startswith(section_word) or f" {section_word} " in line:
                     self.printers[self.last_section](self.current_lines)
                     self.current_lines = []
-                    self.last_section = section_words
+                    self.last_section = section_word
 
             self.current_lines.append(line)
 

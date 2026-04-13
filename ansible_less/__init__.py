@@ -51,7 +51,6 @@ class AnsibleLess:
             "TASK": self.maybe_print_task,
             "HANDLER": self.maybe_print_task,
             "PLAY RECAP": self.print_task,
-            "[WARNING]:": self.print_warning,
         }
         self.config = config
 
@@ -290,6 +289,8 @@ class AnsibleLess:
             self.print_line("".join(lines))
             self.print_line("=====----------------------------------")
 
+        self.print_comments()
+
         if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
 
@@ -298,7 +299,7 @@ class AnsibleLess:
             task_line = lines.pop(0)
 
             buffer = []
-            groupings = self.group_by_hosts(lines)
+            groupings: dict[str, list[str]] = self.group_by_hosts(lines)
 
             # check if we have seen the list of hosts yet before
             if len(self.hosts) == 0:
@@ -424,20 +425,15 @@ class AnsibleLess:
         lines = self.clean_blanks(lines)
         return lines
 
-    def print_warning(self, lines: list[str]) -> None:
-        """prints warnings"""
-        for warning in self.filter_lines(self.clean_lines(lines)):
-            if warning == "":
-                continue
-            for word in self.boring_line_pieces:
-                if word == "[WARNING]:":
-                    continue
-                if word in warning:
-                    break
-            else:
-                self.print_line(warning)
+    def print_comments(self) -> None:
+        """Print comments (like warnings)"""
+        for comment_type in self.current_comments:
+            self.print_line(comment_type + "s:")
+            for comment_list in self.current_comments[comment_type]:
+                for line in self.clean_lines(comment_list):
+                    self.print_line(line)
 
-        self.print_line("")  # force blank line
+            self.print_line("")  # force blank line
 
 
     def maybe_print_task(self, lines: list[str]) -> None:
@@ -455,17 +451,42 @@ class AnsibleLess:
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
+        in_subsection: bool = False
+        subsection_type: str | None = None
         for line_number, line in enumerate(input_file):
             # these words mark the major sections,
             # but we capture everything in them first before deciding to print at the end
             self.line_number = line_number
-            for section_word in ["TASK", "HANDLER", "PLAY RECAP", "[WARNING]:"]:
+
+            if in_subsection:
+                if line.strip() == "":  # marks end of sub-section
+                    in_subsection = False
+                    continue
+
+                # continue saving all the lines in this subsection
+                self.current_comments[subsection_type][-1].append(line.strip())
+                continue
+
+            # catch special insert sections
+            if line.startswith("[WARNING]:") or f" [WARNING]: " in line:
+                subsection_type = "WARNING"
+                self.current_comments[subsection_type].append([line.strip()])  # save this starting line
+                in_subsection = True
+                continue
+
+            # now catch each section and display them or not
+            for section_word in ["TASK", "HANDLER", "PLAY RECAP", ]:
+
+                # catch section breaks
                 if line.startswith(section_word) or f" {section_word} " in line:
                     self.printers[self.last_section](self.current_lines)
                     self.current_lines = []
                     self.current_comments = defaultdict(list)
                     self.last_section = section_word
+                    in_subsection = False
 
             self.current_lines.append(line)
 
+        # XXX XXX XXX TODO: should print last section!
+        self.printers[self.last_section](self.current_lines)
         self.print_trailer(self.current_lines)

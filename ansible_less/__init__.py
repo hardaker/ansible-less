@@ -289,8 +289,6 @@ class AnsibleLess:
             self.print_line("".join(lines))
             self.print_line("=====----------------------------------")
 
-        self.print_comments()
-
         if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
 
@@ -385,6 +383,8 @@ class AnsibleLess:
             task_line = re.sub("\\[", "\\[", task_line)
 
             self.print_line("==== " + self.escape(task_line))
+
+            self.print_comments()
 
             for host in sorted_hosts:
                 if groupings[host]["status"] in skip_headers:

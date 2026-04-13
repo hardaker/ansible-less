@@ -54,8 +54,10 @@ class AnsibleLess:
         }
         self.config = config
 
+        self.line_number: int = 0
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
+        self.current_comments = defaultdict(list)
 
         self.show_header = config["display"]["show_header"]
         self.show_trailer = config["display"]["show_trailer"]
@@ -452,11 +454,15 @@ class AnsibleLess:
         self.last_section: str = "HEADER"
         self.current_lines: list[str] = []
 
-        for line in input_file:
+        for line_number, line in enumerate(input_file):
+            # these words mark the major sections,
+            # but we capture everything in them first before deciding to print at the end
+            self.line_number = line_number
             for section_word in ["TASK", "HANDLER", "PLAY RECAP", "[WARNING]:"]:
                 if line.startswith(section_word) or f" {section_word} " in line:
                     self.printers[self.last_section](self.current_lines)
                     self.current_lines = []
+                    self.current_comments = defaultdict(list)
                     self.last_section = section_word
 
             self.current_lines.append(line)

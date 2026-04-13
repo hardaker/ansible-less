@@ -32,7 +32,7 @@ except Exception:
 from ansible_less import AnsibleLess
 
 
-def parse_args() -> Namespace:
+def parse_args() -> tuple:
     """Parse the command line arguments."""
     parser = ArgumentParserWithConfig(
         formatter_class=help_handler, description=__doc__, epilog="Example Usage: "

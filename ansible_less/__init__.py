@@ -5,6 +5,7 @@ from logging import debug
 from collections import defaultdict
 import re
 import sys
+import collections.abc
 
 __VERSION__ = "1.1"
 
@@ -19,7 +20,7 @@ except Exception:
     pass
 
 
-default_config = {
+default_config: dict[str, dict[str, str | bool]] = {
     "display": {
         "status_prefix": ":",
         "all_sections": False,
@@ -45,7 +46,7 @@ class AnsibleLess:
         output_to: IO[str] = sys.stdout,
     ):
         """Create an AnsibleLess instance."""
-        self.printers = {
+        self.printers: dict[str, collections.abc.Callable] = {
             "HEADER": self.print_header,
             "TASK": self.maybe_print_task,
             "HANDLER": self.maybe_print_task,
@@ -95,15 +96,15 @@ class AnsibleLess:
         self._config = newval
 
     @property
-    def printers(self) -> dict[str, callable]:
+    def printers(self) -> dict[str, collections.abc.Callable]:
         """The individual functions that do printing for a section."""
         return self._printers
 
     @printers.setter
-    def printers(self, newval: dict[str, callable]) -> None:
+    def printers(self, newval: dict[str, collections.abc.Callable]) -> None:
         self._printers = newval
 
-    def print(self, data):
+    def print_line(self, data):
         if getattr(self.output_to, "print", None):
             self.output_to.print(data)
         else:
@@ -115,7 +116,7 @@ class AnsibleLess:
         return line
 
     def pretty_print(self, data):  ## TODO(hardaker): use rich for this printing
-        self.print(data)
+        self.print_line(data)
 
     def clean_blanks(self, lines: list[str]) -> list[str]:
         """Drop trailing blank lines from a list of lines."""
@@ -265,14 +266,14 @@ class AnsibleLess:
 
             # this line isn't boring, thus the whole group is important
             if self.debug:
-                self.print(f"  IMPORTANT: {line}")
+                self.print_line(f"  IMPORTANT: {line}")
             return True
 
         # every line was flagged as boring, so it's not important
         if self.debug:
-            self.print("BORING:")
+            self.print_line("BORING:")
             for line in lines:
-                self.print(f"  B: {line.strip()}")
+                self.print_line(f"  B: {line.strip()}")
         return False
 
     def print_section(
@@ -285,9 +286,9 @@ class AnsibleLess:
         # TODO(hardaker): make an CLI option for group_oks
 
         if self.debug:
-            self.print("=======================================")
-            self.print("".join(lines))
-            self.print("=====----------------------------------")
+            self.print_line("=======================================")
+            self.print_line("".join(lines))
+            self.print_line("=====----------------------------------")
 
         if self.strip_prefixes:
             lines = [re.sub(r"^[^|]*\s*\| ", "", line) for line in lines]
@@ -382,7 +383,7 @@ class AnsibleLess:
             # task_line = re.sub("\\]", "\]", task_line)
             task_line = re.sub("\\[", "\\[", task_line)
 
-            self.print("==== " + self.escape(task_line))
+            self.print_line("==== " + self.escape(task_line))
 
             for host in sorted_hosts:
                 if groupings[host]["status"] in skip_headers:
@@ -399,14 +400,14 @@ class AnsibleLess:
                 buffer.append(status_line)
                 buffer.append("".join(groupings[host]["lines"]))
                 last_host = host
-            self.print("".join(buffer))
+            self.print_line("".join(buffer))
         else:
-            self.print("".join(lines))
+            self.print_line("".join(lines))
 
     def print_header(self, lines: list[str]) -> None:
         """Print the header lines and calculate full host list."""
         if self.show_header:
-            self.print("".join(lines))
+            self.print_line("".join(lines))
 
     def print_nothing(self, _lines: list[str]) -> None:
         """Do nothing."""
@@ -434,9 +435,9 @@ class AnsibleLess:
                 if word in warning:
                     break
             else:
-                self.print(warning)
+                self.print_line(warning)
 
-        self.print("")  # force blank line
+        self.print_line("")  # force blank line
 
 
     def maybe_print_task(self, lines: list[str]) -> None:

@@ -6,7 +6,7 @@ from collections import defaultdict
 import re
 import sys
 
-__VERSION__ = "1.0"
+__VERSION__ = "1.1"
 
 try:
     from rich import print as pretty_print

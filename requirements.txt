@@ -1,3 +1,4 @@
 rich
 rich-logging
 rich-argparse
+argparse-with-config

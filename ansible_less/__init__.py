@@ -409,6 +409,8 @@ class AnsibleLess:
         """Print the header lines and calculate full host list."""
         if self.show_header:
             self.print_line("".join(lines))
+        self.print_comments()
+        self.current_comments = defaultdict(list)
 
     def print_nothing(self, _lines: list[str]) -> None:
         """Do nothing."""
